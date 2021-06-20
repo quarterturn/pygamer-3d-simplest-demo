@@ -8,9 +8,11 @@ uint16_t *framebuffer;
 
 // INCLUDE MODEL DATA
 //#include "sphere.h"
-#include "bunny.h"
+//#include "bunny.h"
 //#include "small_bunny.h"
 //#include "face.h"
+//#include "fox.h"
+#include "teapot-low-poly.h"
 
 
 const float AXLEN = 0.5;
@@ -52,7 +54,7 @@ void drawEdges(Model *M, int *vertices) {
     }
 }
 
-void get_triangle_points(Model *M, int *vertices, uint i, int **p, int **q, int **r) {
+void get_triangle_points(Model *M, int *vertices, unsigned int i, int **p, int **q, int **r) {
     // Get the vertex indecies for the triangle
     PU8 t = &M->faces[i*3];
     uint pi = t[0];
@@ -101,8 +103,7 @@ void fillFaces(Model *M, int *vertices, unsigned int *face_colors, unsigned int 
     unsigned int nt = M->NFaces;
     unsigned int color = 0;
     _mycanvas->fillScreen(ARCADA_BLACK);
-    //for (int j=0; j<nt; j++) {
-    for (int j = nt - 1; j >= 0; j--) {
+    for (int j = nt-1; j >= 0; j--) {
         int i = draw_order? draw_order[j] : j;
         int *p,*q,*r;
         unsigned int fc = face_colors[i] + 50;
@@ -119,8 +120,42 @@ void fillFaces(Model *M, int *vertices, unsigned int *face_colors, unsigned int 
     }
 }
 
+void shadeFaces(Model *M, int *vertices, unsigned int *vertex_colors, unsigned int *draw_order, GFXcanvas16 *_mycanvas) {
+    updateDrawingOrder(M,vertices,draw_order);
+    unsigned int nt = M->NFaces;
+    for (int j = nt-1; j >= 0; j--) {
+        int i = draw_order? draw_order[j]:j;
+        // Get the vertex indecies for the triangle
+        PU8 t = &M->faces[i*3];
+        unsigned int pi = t[0];
+        unsigned int qi = t[1];
+        unsigned int ri = t[2];
+        // get the vertex X and Y coordinates for the triangle
+        int *p = &vertices[pi*3];
+        int *q = &vertices[qi*3];
+        int *r = &vertices[ri*3];
+        // if triangle is facing the camera, draw it
+        if (facing_camera(p,q,r)) {
+            unsigned int color1 = vertex_colors[pi];
+            unsigned int color2 = vertex_colors[qi];
+            unsigned int color3 = vertex_colors[ri];
+            unsigned int  x1 = p[0]+X0;
+            unsigned int  x2 = q[0]+X0;
+            unsigned int  x3 = r[0]+X0;
+            //shadeTriangle(x1,p[1]+Y0,x2,q[1]+Y0,x3,r[1]+Y0,color1,color2,color3);
+        }
+    }
+}
+
+
+
+unsigned int interpolate(unsigned int color1, unsigned int color2, unsigned int alpha) {
+  // The clean way: break out the RGB components and reassemble
+  return color1 * alpha + color2 * (32-alpha) >> 5;
+}
+
 void getScaleTransform(float AXLEN, float *abuff1) {
-  for (uint i=0; i<9; i++) abuff1[i]=0;
+  for (unsigned int i=0; i<9; i++) abuff1[i]=0;
   abuff1[0] = abuff1[4] = abuff1[8] = AXLEN;
 }
 
@@ -147,7 +182,7 @@ void transformPoint(float *transform,P8 p,int *q) {
     int nx = p[0];
     int ny = p[1];
     int nz = p[2];
-    for (uint i=0; i<3; i++)
+    for (unsigned int i=0; i<3; i++)
         q[i] = nx*transform[i]+ny*transform[i+3]+nz*transform[i+6];
 }
 
@@ -169,13 +204,13 @@ inline float inverseMagnitude(float x, float y, float z) {
 
 
 void normalizeTransform(float *transform, float *output) {
-    for (uint j=0; j<3; j++) {
+    for (unsigned int j=0; j<3; j++) {
         float scale = inverseMagnitude(transform[j],transform[j+3],transform[j+6]);
-        for (uint i=j; i<9; i+=3) output[i] = transform[i]*scale;
+        for (unsigned int i=j; i<9; i+=3) output[i] = transform[i]*scale;
     }
 }
 
-void project_normals(float *transform, P8 normals,unsigned int n,uint *output) {
+void project_normals(float *transform, P8 normals,unsigned int n,unsigned int *output) {
     float normalized[9];
     normalizeTransform(transform,normalized);
     for (unsigned int i=0; i<n; i++) {
@@ -192,7 +227,7 @@ void computeFaceLightingColors(Model *M, float *transform, unsigned int *face_co
     project_normals(transform,M->faceNormals,M->NFaces,face_colors);
 }
 
-void computeTriangleDepths(Model *M, int *vertices, uint *draw_order, uint *depths) {
+void computeTriangleDepths(Model *M, int *vertices, unsigned int *draw_order, unsigned int *depths) {
     unsigned int nt = M->NFaces;
     for (int j=0; j<nt; j++) {
         int i = draw_order!=NULL? draw_order[j]:j;
@@ -217,7 +252,7 @@ void updateDrawingOrder(Model *M, int *vertices, unsigned int *draw_order) {
     unsigned int depths[nt];
     computeTriangleDepths(M,vertices,draw_order,depths);
     // Bubble sort the triangles by depth keeping track of the permutation
-    uint sorted = 0;
+    unsigned int sorted = 0;
     while (!sorted) {
         sorted = 1;
         for (int i=1;i<nt;i++) {
@@ -226,7 +261,7 @@ void updateDrawingOrder(Model *M, int *vertices, unsigned int *draw_order) {
             if (d2>d1) {
                 depths[i-1] = d2;
                 depths[i]   = d1;
-                uint temp    = draw_order[i];
+                unsigned int temp    = draw_order[i];
                 draw_order[i]   = draw_order[i-1];
                 draw_order[i-1] = temp;
                 sorted = 0;
