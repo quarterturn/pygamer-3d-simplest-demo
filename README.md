@@ -1,4 +1,6 @@
 # PyGamer 3D Simplest Demo
+![Alt text](3d-bunny.JPG?raw=true "Stanford Bunny")
+
 
 This is a demo of doing 3D graphics on an Adafruit PyGamer board. It makes use of a frambuffer and canvas so that screen writes can be done all at once via DMA. This makes it fast and also allows using the Painter's Algorithm to hide hidden polygons via depth sorting.
 
