@@ -8,11 +8,11 @@ uint16_t *framebuffer;
 
 // INCLUDE MODEL DATA
 //#include "sphere.h"
-//#include "bunny.h"
+#include "bunny.h"
 //#include "small_bunny.h"
 //#include "face.h"
 //#include "fox.h"
-#include "teapot-low-poly.h"
+//#include "teapot-low-poly.h"
 
 
 const float AXLEN = 0.5;
@@ -110,7 +110,7 @@ void fillFaces(Model *M, int *vertices, unsigned int *face_colors, unsigned int 
         get_triangle_points(M,vertices,i,&p,&q,&r);
         if (facing_camera(p,q,r)) {
             if (face_colors != NULL) {
-                color = color = arcada.display->color565(fc, fc, fc);
+                color = arcada.display->color565(fc, fc, fc);
                 unsigned int x1 = p[0]+X0;
                 unsigned int x2 = q[0]+X0;
                 unsigned int x3 = r[0]+X0;
@@ -123,6 +123,7 @@ void fillFaces(Model *M, int *vertices, unsigned int *face_colors, unsigned int 
 void shadeFaces(Model *M, int *vertices, unsigned int *vertex_colors, unsigned int *draw_order, GFXcanvas16 *_mycanvas) {
     updateDrawingOrder(M,vertices,draw_order);
     unsigned int nt = M->NFaces;
+    _mycanvas->fillScreen(ARCADA_BLACK);
     for (int j = nt-1; j >= 0; j--) {
         int i = draw_order? draw_order[j]:j;
         // Get the vertex indecies for the triangle
@@ -136,23 +137,20 @@ void shadeFaces(Model *M, int *vertices, unsigned int *vertex_colors, unsigned i
         int *r = &vertices[ri*3];
         // if triangle is facing the camera, draw it
         if (facing_camera(p,q,r)) {
-            unsigned int color1 = vertex_colors[pi];
-            unsigned int color2 = vertex_colors[qi];
-            unsigned int color3 = vertex_colors[ri];
+//            unsigned int color0 = arcada.display->color565(vertex_colors[pi], vertex_colors[pi], vertex_colors[pi]);
+//            unsigned int color1 = arcada.display->color565(vertex_colors[qi], vertex_colors[qi], vertex_colors[qi]);
+//            unsigned int color2 = arcada.display->color565(vertex_colors[ri], vertex_colors[ri], vertex_colors[ri]);
+            unsigned int color0 = vertex_colors[pi];
+            unsigned int color1 = vertex_colors[qi];
+            unsigned int color2 = vertex_colors[ri];
             unsigned int  x1 = p[0]+X0;
             unsigned int  x2 = q[0]+X0;
             unsigned int  x3 = r[0]+X0;
-            //shadeTriangle(x1,p[1]+Y0,x2,q[1]+Y0,x3,r[1]+Y0,color1,color2,color3);
+            _mycanvas->shadeTriangle(x1, p[1]+Y0, x2,q[1]+Y0, x3, r[1]+Y0, color0, color1, color2);
         }
     }
 }
 
-
-
-unsigned int interpolate(unsigned int color1, unsigned int color2, unsigned int alpha) {
-  // The clean way: break out the RGB components and reassemble
-  return color1 * alpha + color2 * (32-alpha) >> 5;
-}
 
 void getScaleTransform(float AXLEN, float *abuff1) {
   for (unsigned int i=0; i<9; i++) abuff1[i]=0;
@@ -339,10 +337,14 @@ void model() {
     // point render
     //drawVertices(M, vbuff2, canvas);
     // facet render
-    unsigned int face_colors[NTRIANGLES];
-    computeFaceLightingColors(M, abuff2, face_colors);
-    fillFaces(M, vbuff2, face_colors, permutation, canvas); 
+    //unsigned int face_colors[NTRIANGLES];
+    //computeFaceLightingColors(M, abuff2, face_colors);
+    //fillFaces(M, vbuff2, face_colors, permutation, canvas); 
+    //arcada.blitFrameBuffer(0, 0, true, true);
+    // shaded poly render
+    unsigned int normal_colors[NVERTICES];
+    computeVertexLightingColors(M, abuff2, normal_colors);
+    shadeFaces(M, vbuff2, normal_colors, permutation, canvas);
     arcada.blitFrameBuffer(0, 0, true, true);
-   
   }
 }

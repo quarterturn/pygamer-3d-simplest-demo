@@ -6,6 +6,8 @@ This is a demo of doing 3D graphics on an Adafruit PyGamer board. It makes use o
 
 The 3D code is based heavily on https://github.com/michaelerule/Uno9341TFT. To make things easy to adapt and understand, the 3D code is rewritten as simple functions, vs a class inheriting a specific TFT driver library.
 
+The .stl to .h converter has been included along with the demo files. It has been hackily modified to scale to numpy.uint16 so that more complex objects can be used. There's no need to recenter and scale in the code now, but I've left it in for now. 
+
 #  Note
 Using DMA reverses the byte order to the display, so __builtin_bswap16 function has to be used to swap the RGB565 color information. If you don't do this you'll wonder why your colors are all wrong!
 
